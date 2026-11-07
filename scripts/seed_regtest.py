@@ -44,9 +44,9 @@ def main() -> None:
         print("sent 0.001 BTC to bob")
 
     for name in ("alice", "bob"):
-        print(f"{name}: {wallet.get_balance(name)} BTC")
+        print(f"{name}: {wallet.get_balance(name):.8f} BTC")
     try:
-        print(f"{s.service_wallet}: {wallet.get_balance(s.service_wallet)} BTC")
+        print(f"{s.service_wallet}: {wallet.get_balance(s.service_wallet):.8f} BTC")
     except Exception as exc:  # noqa: BLE001
         print(f"service wallet balance unavailable: {exc}")
 

@@ -7,7 +7,7 @@ API_URL="${API_URL:-http://localhost:8000}"
 API_KEY="${API_KEY:-demo-key}"
 RUN="$(date +%s)"   # чтобы номера заказов не повторялись между запусками
 
-pretty() { python3 -m json.tool 2>/dev/null || cat; }
+pretty() { python3 -m json.tool --no-ensure-ascii 2>/dev/null || cat; }
 pay() {  # pay <order_id> <customer_id> <amount>
   curl -s -X POST "$API_URL/api/v1/payments" \
        -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" \

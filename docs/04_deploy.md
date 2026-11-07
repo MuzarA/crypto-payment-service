@@ -76,6 +76,21 @@ docker compose down                        # остановить (данные 
 docker compose down -v                     # остановить и удалить все данные
 ```
 
+## Запуск на Windows одной командой (без Docker)
+
+Нужен Python 3.10+ (`winget install Python.Python.3.12`). Откройте PowerShell и вставьте:
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://raw.githubusercontent.com/MuzarA/crypto-payment-service/main/scripts/run_local_windows.ps1 | iex"
+```
+
+Скрипт сделает всё сам:
+1. скачает проект и Bitcoin Core;
+2. запустит узел regtest и API на `http://127.0.0.1:8000`;
+3. создаст клиентов, покажет демо и откроет Swagger UI.
+
+Всё ставится в папку `%USERPROFILE%\crypto-payment-service-demo`. Чтобы остановить, выполните `Stop-Process -Name bitcoind` и закройте окно uvicorn.
+
 ## Запуск на своём компьютере без Docker (для отладки)
 
 ```bash

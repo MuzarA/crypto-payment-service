@@ -1,0 +1,16 @@
+flowchart LR
+    merchant["🏪 Сервис-клиент (магазин)<br/><i>внешняя система</i><br/>хочет взять оплату<br/>со своего клиента"]
+    pay(["💳 Crypto Payment Service<br/><b>наша система</b><br/>FastAPI · Python"])
+    wallet["₿ Bitcoin Core (regtest)<br/><i>open-source криптокошелёк</i><br/>кошельки клиентов<br/>+ кошелёк сервиса"]
+    db[("SQLite<br/>история платежей")]
+
+    merchant -- "POST /payments (заказ, клиент, сумма)<br/>POST /payments/{id}/refund<br/>GET /payments/{id}<br/>+ X-API-Key" --> pay
+    pay -- "ответ: COMPLETED / FAILED / REFUNDED,<br/>txid, причина ошибки" --> merchant
+    pay -- "JSON-RPC: есть ли кошелёк,<br/>данные клиента, баланс,<br/>sendtoaddress" --> wallet
+    wallet -- "адрес, баланс, txid / ошибка" --> pay
+    pay --- db
+
+    classDef system fill:#1f6feb,stroke:#0b3d91,color:#fff
+    classDef ext fill:#eef2f7,stroke:#6b7a90,color:#111
+    class pay system
+    class merchant,wallet ext

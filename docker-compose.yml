@@ -1,0 +1,43 @@
+# Запуск:  cp .env.example .env  &&  docker compose up -d --build
+services:
+  bitcoind:
+    build: ./docker/bitcoind
+    restart: unless-stopped
+    # regtest = локальная тестовая сеть биткоина (бесплатные «деньги», блоки по команде)
+    command: >
+      bitcoind -regtest -server -printtoconsole
+      -rpcuser=${BITCOIN_RPC_USER}
+      -rpcpassword=${BITCOIN_RPC_PASSWORD}
+      -rpcbind=0.0.0.0
+      -rpcallowip=172.16.0.0/12
+      -fallbackfee=0.0002
+    environment:
+      BITCOIN_RPC_USER: ${BITCOIN_RPC_USER}
+      BITCOIN_RPC_PASSWORD: ${BITCOIN_RPC_PASSWORD}
+    volumes:
+      - bitcoin-data:/root/.bitcoin
+    # Порт RPC 18443 НЕ открыт наружу — к кошельку ходит только наш сервис по внутренней сети.
+    healthcheck:
+      test: ["CMD-SHELL", "bitcoin-cli -regtest -rpcuser=$$BITCOIN_RPC_USER -rpcpassword=$$BITCOIN_RPC_PASSWORD getblockchaininfo > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BITCOIN_RPC_URL: http://bitcoind:18443
+      DB_PATH: /data/payments.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - api-data:/data
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+
+volumes:
+  bitcoin-data:
+  api-data:

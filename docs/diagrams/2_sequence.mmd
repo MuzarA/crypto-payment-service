@@ -1,0 +1,49 @@
+sequenceDiagram
+    autonumber
+    participant M as Магазин (сервис-клиент)
+    participant API as API (FastAPI routes)
+    participant PS as PaymentService
+    participant R as PaymentRepository (SQLite)
+    participant W as BitcoinCoreWallet
+    participant BTC as Bitcoin Core (regtest)
+
+    M->>API: POST /api/v1/payments {order_id, customer_id, amount} + X-API-Key
+    API->>API: проверить API-ключ и формат JSON
+    API->>PS: create_payment(merchant, order, customer, amount)
+    PS->>R: find_by_order() — нет ли дубля?
+    PS->>R: add(payment: CREATED)
+
+    PS->>W: wallet_exists(customer)
+    W->>BTC: listwallets / listwalletdir (+loadwallet)
+    BTC-->>W: список кошельков
+    alt кошелька нет
+        W-->>PS: false
+        PS->>R: save(FAILED, WALLET_NOT_FOUND)
+        PS-->>API: payment FAILED
+        API-->>M: 201 {status: FAILED, failure_reason: WALLET_NOT_FOUND}
+    else кошелёк есть
+        W-->>PS: true
+        PS->>W: get_customer_info(customer)
+        W->>BTC: getwalletinfo, getnewaddress
+        BTC-->>W: данные клиента, адрес для возврата
+        W-->>PS: CustomerWalletInfo
+        PS->>R: save(WALLET_VERIFIED)
+
+        PS->>W: get_balance(customer) — повторный запрос
+        W->>BTC: getbalance
+        BTC-->>W: баланс
+        alt денег не хватает (баланс < сумма + комиссия)
+            PS->>R: save(FAILED, INSUFFICIENT_FUNDS)
+            API-->>M: 201 {status: FAILED, failure_reason: INSUFFICIENT_FUNDS}
+        else денег хватает
+            PS->>R: save(FUNDS_CONFIRMED)
+            PS->>W: charge(customer, amount)
+            W->>BTC: getnewaddress (кошелёк сервиса)
+            W->>BTC: sendtoaddress(адрес сервиса, amount) от кошелька клиента
+            BTC-->>W: txid
+            W-->>PS: txid
+            PS->>R: save(COMPLETED, txid)
+            PS-->>API: payment COMPLETED
+            API-->>M: 201 {status: COMPLETED, message: "Деньги сняты успешно", txid}
+        end
+    end

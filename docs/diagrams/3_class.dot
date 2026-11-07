@@ -1,0 +1,130 @@
+// UML-диаграмма классов. Рендер: dot -Tpng -Gdpi=150 3_class.dot -o 3_class.png
+digraph classes {
+  rankdir=TB; nodesep=0.5; ranksep=0.7; splines=true;
+  node [shape=plain, fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10, color="#444444"];
+
+  PaymentService [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#dbe9ff">
+    <tr><td><b>PaymentService</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">- repo: PaymentRepository<br/>- reader: WalletReader<br/>- transfer: WalletTransfer<br/>- fee_reserve: Decimal</td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ create_payment(merchant_id, order_id, customer_id, amount, currency): Payment<br/>+ refund_payment(merchant_id, payment_id): Payment<br/>+ get_payment(merchant_id, payment_id): Payment<br/>+ list_payments(merchant_id, limit): List[Payment]<br/>- _process(payment)<br/>- _fail(payment, reason, message)</td></tr>
+    </table>>];
+
+  WalletReader [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#fff7d6">
+    <tr><td><i>«interface»</i><br/><b>WalletReader</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ wallet_exists(customer_id): bool<br/>+ get_customer_info(customer_id): CustomerWalletInfo<br/>+ get_balance(customer_id): Decimal</td></tr>
+    </table>>];
+
+  WalletTransfer [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#fff7d6">
+    <tr><td><i>«interface»</i><br/><b>WalletTransfer</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ charge(customer_id, amount): str<br/>+ refund(to_address, amount): str</td></tr>
+    </table>>];
+
+  WalletGateway [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#fff7d6">
+    <tr><td><i>«interface»</i><br/><b>WalletGateway</b></td></tr>
+    </table>>];
+
+  PaymentRepository [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#fff7d6">
+    <tr><td><i>«interface»</i><br/><b>PaymentRepository</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ add(payment)<br/>+ save(payment)<br/>+ get(payment_id): Payment<br/>+ find_by_order(merchant_id, order_id): Payment<br/>+ list_by_merchant(merchant_id, limit): List[Payment]</td></tr>
+    </table>>];
+
+  BitcoinCoreWallet [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#e6f4ea">
+    <tr><td><b>BitcoinCoreWallet</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">- rpc: BitcoinRpcClient<br/>- service_wallet: str<br/>- auto_mine: bool</td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ ensure_ready()<br/>+ (все методы WalletGateway)</td></tr>
+    </table>>];
+
+  FakeWallet [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#e6f4ea">
+    <tr><td><b>FakeWallet</b><br/><font point-size="9">(для тестов)</font></td></tr>
+    </table>>];
+
+  BitcoinRpcClient [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#e6f4ea">
+    <tr><td><b>BitcoinRpcClient</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">- url: str</td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ call(method, *params, wallet): Any</td></tr>
+    </table>>];
+
+  SqlitePaymentRepository [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#e6f4ea">
+    <tr><td><b>SqlitePaymentRepository</b></td></tr>
+    </table>>];
+
+  InMemoryPaymentRepository [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#e6f4ea">
+    <tr><td><b>InMemoryPaymentRepository</b><br/><font point-size="9">(для тестов)</font></td></tr>
+    </table>>];
+
+  Payment [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#f3e8ff">
+    <tr><td><b>Payment</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ id: str<br/>+ merchant_id: str<br/>+ order_id: str<br/>+ customer_id: str<br/>+ amount: Decimal<br/>+ currency: str<br/>+ status: PaymentStatus<br/>+ txid: str<br/>+ refund_txid: str<br/>+ refund_address: str<br/>+ failure_reason: FailureReason<br/>+ history: List[StatusChange]</td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ create(...): Payment  <i>{static}</i><br/>+ move_to(target)<br/>+ fail(reason, message)</td></tr>
+    </table>>];
+
+  StatusChange [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#f3e8ff">
+    <tr><td><b>StatusChange</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ status: PaymentStatus<br/>+ at: datetime<br/>+ note: str</td></tr>
+    </table>>];
+
+  PaymentStateMachine [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#f3e8ff">
+    <tr><td><b>PaymentStateMachine</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ can_transition(current, target): bool<br/>+ ensure_transition(current, target)<br/>+ is_final(status): bool</td></tr>
+    </table>>];
+
+  PaymentStatus [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#f3e8ff">
+    <tr><td><i>«enumeration»</i><br/><b>PaymentStatus</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">CREATED<br/>WALLET_VERIFIED<br/>FUNDS_CONFIRMED<br/>COMPLETED<br/>FAILED<br/>REFUNDED</td></tr>
+    </table>>];
+
+  FailureReason [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#f3e8ff">
+    <tr><td><i>«enumeration»</i><br/><b>FailureReason</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">WALLET_NOT_FOUND<br/>INSUFFICIENT_FUNDS<br/>WALLET_ERROR</td></tr>
+    </table>>];
+
+  CustomerWalletInfo [label=<
+    <table border="1" cellborder="0" cellspacing="0" cellpadding="4" bgcolor="#fff7d6">
+    <tr><td><b>CustomerWalletInfo</b></td></tr>
+    <tr><td align="left" balign="left" sides="t" border="1">+ customer_id: str<br/>+ wallet_name: str<br/>+ refund_address: str<br/>+ tx_count: int</td></tr>
+    </table>>];
+
+  { rank=same; WalletReader; WalletTransfer; PaymentRepository; }
+  { rank=same; BitcoinCoreWallet; FakeWallet; SqlitePaymentRepository; InMemoryPaymentRepository; }
+
+  // зависимости (ассоциация «использует»)
+  PaymentService -> WalletReader [label="uses", arrowhead=vee];
+  PaymentService -> WalletTransfer [label="uses", arrowhead=vee];
+  PaymentService -> PaymentRepository [label="uses", arrowhead=vee];
+  PaymentService -> Payment [label="creates", style=dashed, arrowhead=vee];
+
+  // наследование интерфейсов
+  WalletGateway -> WalletReader [arrowhead=onormal];
+  WalletGateway -> WalletTransfer [arrowhead=onormal];
+
+  // реализация интерфейсов
+  BitcoinCoreWallet -> WalletGateway [style=dashed, arrowhead=onormal, label="implements"];
+  FakeWallet -> WalletGateway [style=dashed, arrowhead=onormal];
+  SqlitePaymentRepository -> PaymentRepository [style=dashed, arrowhead=onormal, label="implements"];
+  InMemoryPaymentRepository -> PaymentRepository [style=dashed, arrowhead=onormal];
+
+  BitcoinCoreWallet -> BitcoinRpcClient [arrowhead=vee];
+  WalletReader -> CustomerWalletInfo [label="returns", style=dashed, arrowhead=vee];
+
+  // домен
+  Payment -> StatusChange [arrowtail=diamond, dir=back, label="1..*"];
+  Payment -> PaymentStatus [arrowhead=vee];
+  Payment -> FailureReason [arrowhead=vee];
+  Payment -> PaymentStateMachine [label="checks transitions", style=dashed, arrowhead=vee];
+}

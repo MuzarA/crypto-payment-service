@@ -1,0 +1,24 @@
+stateDiagram-v2
+    direction LR
+    [*] --> CREATED : POST /payments<br/>(запрос принят)
+
+    CREATED --> WALLET_VERIFIED : кошелёк найден,<br/>данные клиента получены
+    CREATED --> FAILED : кошелька нет<br/>[WALLET_NOT_FOUND]
+
+    WALLET_VERIFIED --> FUNDS_CONFIRMED : баланс ≥ сумма + комиссия
+    WALLET_VERIFIED --> FAILED : не хватает денег<br/>[INSUFFICIENT_FUNDS]
+
+    FUNDS_CONFIRMED --> COMPLETED : sendtoaddress OK<br/>(есть txid)
+    FUNDS_CONFIRMED --> FAILED : кошелёк отказал<br/>[INSUFFICIENT_FUNDS / WALLET_ERROR]
+
+    COMPLETED --> REFUNDED : POST /payments/{id}/refund<br/>(есть refund_txid)
+
+    FAILED --> [*]
+    REFUNDED --> [*]
+    COMPLETED --> [*]
+
+    note right of FAILED
+        Конечное состояние.
+        Возврат невозможен —
+        деньги не списывались.
+    end note
